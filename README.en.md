@@ -9,8 +9,9 @@ Data is crowdsourced from [gdebenz.ru](https://gdebenz.ru/) (drivers update stat
 - Find stations by coordinates or address (address → coords via your own geocoder)
 - Fuel priority: default 95, fallback 92
 - Prices for 92/95/ДТ with freshness timestamps
-- Driver comments: queues, limits, what's actually available
-- Works from Telegram: user can send location
+- 💬 Driver comments: queues, limits, what's actually available
+- 🚗 **«Build route»** link to Yandex Maps for every station (from your location)
+- 📍 Works from Telegram: user can send location
 - Fully configurable via env vars or SKILL.md edit
 
 ## Quick start
@@ -59,6 +60,7 @@ Env vars (defaults):
 | `GB_API_TOP_N` | `8` | How many stations to show |
 | `GB_API_COMMENTS` | `1` | Show driver comments (`0` = off) |
 | `GB_API_COMMENT_N` | `5` | How many stations get comments |
+| `GB_API_MAPS` | `1` | «Build route» link to Yandex Maps (`0` = off) |
 
 Or edit the «Приоритеты (по умолчанию)» section in `skills/gdebenz-api/SKILL.md`.
 

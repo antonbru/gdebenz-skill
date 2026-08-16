@@ -9,6 +9,7 @@
     GB_API_TOP_N       сколько станций показать          (default: 8)
     GB_API_COMMENTS    показывать комментарии водителей  (default: 1; 0 = выключить)
     GB_API_COMMENT_N   сколько станций с комментариями   (default: 5)
+    GB_API_MAPS        ссылка «Построить маршрут» (Яндекс Карты) (default: 1; 0 = выключить)
 
 Примеры:
     GB_API_FUEL=95 python3 nearest_stations.py 55.7539 37.6208
@@ -88,18 +89,28 @@ def build_rows(lat0: float, lon0: float, stations: list, fuel: str | None, radiu
             "p95": p95,
             "t": t,
             "conflict": s.get("conflict"),
+            "lat": s.get("lat"),
+            "lon": s.get("lon"),
         })
     rows.sort(key=lambda r: r["d"])
     return rows
 
 
-def print_rows(rows, top_n: int):
+def yandex_maps_url(lat0: float, lon0: float, lat: float, lon: float) -> str:
+    """Ссылка «Построить маршрут» в Яндекс Картах от точки пользователя до АЗС."""
+    return (f"https://yandex.ru/maps/?rtext={lat0:.4f},{lon0:.4f}~{lat:.4f},{lon:.4f}&rtt=auto")
+
+
+def print_rows(rows, top_n: int, maps_on: bool, lat0: float = None, lon0: float = None):
     for r in rows[:top_n]:
         status = {"yes": "✅", "no": "❌"}.get(r["status"], "—")
         warn = " ⚠️очередь" if r["conflict"] else ""
         fresh = f" (отм. {r['t']})" if r["t"] else ""
+        route = ""
+        if maps_on and r.get("lat") is not None and lat0 is not None:
+            route = " | 🚗 " + yandex_maps_url(lat0, lon0, r["lat"], r["lon"])
         print(f"  {r['d']:5.2f} км | {status} {r['name']:<18s} | {r['addr']:<32s} | "
-              f"топливо: {r['fuels'] or '—':10s} | 92={r['p92']} 95={r['p95']}{fresh}{warn}")
+              f"топливо: {r['fuels'] or '—':10s} | 92={r['p92']} 95={r['p95']}{fresh}{warn}{route}")
 
 
 def main() -> int:
@@ -116,6 +127,7 @@ def main() -> int:
     top_n = env_int("GB_API_TOP_N", 8)
     comments_on = os.environ.get("GB_API_COMMENTS", "1") != "0"
     comment_n = env_int("GB_API_COMMENT_N", 5)
+    maps_on = os.environ.get("GB_API_MAPS", "1") != "0"
 
     # bbox: delta по широте ~= radius/111 км; по долготе зависит от широты — берём с запасом
     dlat = radius / 111.0
@@ -142,7 +154,7 @@ def main() -> int:
     print(f"Найдено АЗС: {len(rows)} (радиус {radius} км)"
           + (f", топливо {used_fuel}" if used_fuel else "")
           + (" — ⚠️ основного топлива нет, показываю запасное" if fallback_used else ""))
-    print_rows(rows, top_n)
+    print_rows(rows, top_n, maps_on, args.lat, args.lon)
 
     if comments_on:
         print("\nСвежие комментарии водителей:")
